@@ -2,7 +2,7 @@
 #include <SFML/Graphics.hpp>
 
 #define TEXTURE_SHEET_WIDTH 10
-#define TEXTURE_SHEED_HEIGHT 4
+#define TEXTURE_SHEET_HEIGHT 4
 #define TEXTURE_SIZE 128
 
 class Coin : public sf::RectangleShape

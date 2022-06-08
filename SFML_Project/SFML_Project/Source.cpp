@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include "Coin.h"
+#include <SFML/Network.hpp>
 
 int main()
 {
@@ -48,6 +49,13 @@ int main()
   sf::Sound landingSound;
   landingSound.setBuffer(landingBuffer);
 
+
+  sf::Text pressSpace;
+  pressSpace.setFont(font);
+  pressSpace.setString("Press 'space' to flip");
+  pressSpace.setOrigin(sf::Vector2f(pressSpace.getGlobalBounds().width, pressSpace.getGlobalBounds().height) * 0.5f);
+  pressSpace.setPosition(1280 / 2, 720 / 2);
+  pressSpace.setOutlineThickness(1);
 
   sf::Clock deltaTime;
   while (wnd.isOpen())
@@ -120,6 +128,8 @@ int main()
     wnd.draw(bck);
     wnd.draw(points);
     wnd.draw(coin);
+    if (!coinJustDone)
+      wnd.draw(pressSpace);
     wnd.draw(info);
     wnd.display();
   }

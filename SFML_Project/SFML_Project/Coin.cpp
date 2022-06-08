@@ -116,7 +116,7 @@ void Coin::StepTextureRect()
     myTextureXStep = 0;
     myTextureYStep++;
   }
-  if (myTextureYStep == TEXTURE_SHEED_HEIGHT)
+  if (myTextureYStep == TEXTURE_SHEET_HEIGHT)
   {
     myTextureYStep = 0;
   }
