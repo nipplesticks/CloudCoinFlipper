@@ -1,7 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
-#include "Coin.h"
 #include <SFML/Network.hpp>
+#include "Coin.h"
 
 int main()
 {
@@ -13,7 +13,7 @@ int main()
   background.loadFromFile("Assets/bck.png");
   sf::RectangleShape bck(sf::Vector2f(1280, 720));
   bck.setTexture(&background);
-  
+
   Coin coin;
   coin.setPosition(1280 / 2, 720 / 1.5);
   coin.setOrigin(coin.getSize() * 0.5f);
@@ -98,7 +98,7 @@ int main()
       landingSound.play();
       coinJustDone = false;
       moveInfo = true;
-      info.setPosition(coin.getPosition() + sf::Vector2f(-128 / 2, - 128 / 2));
+      info.setPosition(coin.getPosition() + sf::Vector2f(-128 / 2, -128 / 2));
       if (coin.IsHeads())
       {
         info.setFillColor(sf::Color::Yellow);
@@ -118,7 +118,7 @@ int main()
     if (moveInfo)
     {
       moveTimer += dt * 3.14f;
-      info.move(sin(moveTimer) *  speed * dt, -dt * 300.0f);
+      info.move(sin(moveTimer) * speed * dt, -dt * 300.0f);
     }
 
     points.setString("NrHeads: " + std::to_string(nrOfHeads) + "\nNrTails: " + std::to_string(nrOfTails));

@@ -2,6 +2,16 @@
 
 #include <iostream>
 
+struct RandPacket
+{
+  unsigned short min;
+  unsigned short max;
+};
+struct ResPacket
+{
+  unsigned short value;
+};
+
 sf::Texture Coin::COIN_SHEET;
 float Coin::SPRITE_SWAP_TIME = 0.01f;
 float Coin::MAX_FLIP_TIME = 2.0f;
@@ -27,11 +37,17 @@ Coin::Coin()
   mySpriteTime = 0.0f;
   setTextureRect(myTextureRect);
   setTexture(&COIN_SHEET);
+  myHasConnection = true;
+  if (mySocket.connect("192.168.8.103", 4444) != sf::Socket::Done)
+  {
+    myHasConnection = false;
+    std::cout << "Failed to connect!\n";
+  }
 }
 
 Coin::~Coin()
 {
-
+  mySocket.disconnect();
 }
 
 void Coin::SetFlip(bool isFlipping)
@@ -39,18 +55,43 @@ void Coin::SetFlip(bool isFlipping)
   if (myIsFlipping && !isFlipping)
   {
     myTextureXStep = 4;
-    if (myTextureYStep == 0 || myTextureYStep == 3)
+    if (myHasConnection)
     {
-      myIsHeads = true;
-      myTextureYStep = 0;
-      std::cout << "HEADS!\n";
+      ResPacket val{};
+      size_t bytes = 0;
+      if (mySocket.receive(&val, sizeof(val), bytes))
+      {
+        std::cout << "failed to receive!\n";
+        myHasConnection = false;
+      }
+      int value = val.value;
+      if (value == 0)
+      {
+        myTextureYStep = 0;
+        myIsHeads = true;
+      }
+      else if (value == 1)
+      {
+        myTextureYStep = 2;
+        myIsHeads = false;
+      }
     }
-    else
+    if (!myHasConnection)
     {
-      myTextureYStep = 2;
-      myIsHeads = false;
-      std::cout << "TAIL!\n";
+      if (myTextureYStep == 0 || myTextureYStep == 3)
+      {
+        myIsHeads = true;
+        myTextureYStep = 0;
+        std::cout << "HEADS!\n";
+      }
+      else
+      {
+        myTextureYStep = 2;
+        myIsHeads = false;
+        std::cout << "TAIL!\n";
+      }
     }
+
     myTextureRect.left = myTextureXStep * TEXTURE_SIZE;
     myTextureRect.top = myTextureYStep * TEXTURE_SIZE;
     setTextureRect(myTextureRect);
@@ -103,6 +144,17 @@ void Coin::Flip()
 {
   if (!myIsFlipping)
   {
+    if (myHasConnection)
+    {
+      RandPacket rndPacket{};
+      rndPacket.min = 0;
+      rndPacket.max = 1;
+      if (mySocket.send(&rndPacket, sizeof(rndPacket)) != sf::Socket::Done)
+      {
+        std::cout << "Failed to send packet!\n";
+        myHasConnection = false;
+      }
+    }
     myFlipTimer = 0.0f;
     myIsFlipping = true;
     myFlipTime =  1.0f + ((float)(rand() % 1000 + 1) / 1000.0f) * (MAX_FLIP_TIME - 1.0f);

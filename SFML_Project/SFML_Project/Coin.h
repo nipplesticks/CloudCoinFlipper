@@ -1,5 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <SFML/Network.hpp>
 
 #define TEXTURE_SHEET_WIDTH 10
 #define TEXTURE_SHEET_HEIGHT 4
@@ -37,4 +38,6 @@ private:
   int myTextureYStep;
   float myFlipTime = 0.0f;
   float myFlipTimer = 0.0f;
+  bool myHasConnection;
+  sf::TcpSocket mySocket;
 };
