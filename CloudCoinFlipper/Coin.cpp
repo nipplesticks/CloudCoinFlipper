@@ -1,5 +1,5 @@
 #include "Coin.h"
-
+#include <fstream>
 #include <iostream>
 
 struct RandPacket
@@ -37,11 +37,26 @@ Coin::Coin()
   mySpriteTime = 0.0f;
   setTextureRect(myTextureRect);
   setTexture(&COIN_SHEET);
-  myHasConnection = true;
-  if (mySocket.connect("192.168.8.103", 4444) != sf::Socket::Done)
+  myHasConnection = false;
+
+  std::ifstream input;
+  input.open("Assets/IpAndPort.txt");
+  if (input)
   {
-    myHasConnection = false;
-    std::cout << "Failed to connect!\n";
+    myHasConnection = true;
+    
+    std::string ip;
+    std::getline(input, ip);
+    unsigned short port;
+    input >> port;
+
+    if (mySocket.connect(ip, port) != sf::Socket::Done)
+    {
+      myHasConnection = false;
+      std::cout << "Failed to connect!\n";
+    }
+
+    input.close();
   }
 }
 
