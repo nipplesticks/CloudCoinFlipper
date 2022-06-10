@@ -15,6 +15,7 @@ struct ResPacket
 sf::Texture Coin::COIN_SHEET;
 float Coin::SPRITE_SWAP_TIME = 0.01f;
 float Coin::MAX_FLIP_TIME = 2.0f;
+sf::Vector2f Coin::WND_SIZE(1280, 720);
 
 void Coin::LoadTextures()
 {
@@ -39,7 +40,7 @@ Coin::Coin()
   setTexture(&COIN_SHEET);
   myHasConnection = false;
 
-  std::ifstream input;
+ std::ifstream input;
   input.open("Assets/IpAndPort.txt");
   if (input)
   {
@@ -82,12 +83,13 @@ void Coin::SetFlip(bool isFlipping)
         myHasConnection = false;
       }
       int value = val.value;
-      if (value == 0)
+      std::cout << "value received: " << value << std::endl;
+      if (value % 2)
       {
         myTextureYStep = 0;
         myIsHeads = true;
       }
-      else if (value == 1)
+      else
       {
         myTextureYStep = 2;
         myIsHeads = false;
@@ -124,12 +126,12 @@ void Coin::Update(float dt)
 
     if (myFlipTimer < myFlipTime * 0.5f)
     {
-      move(0.0f, -dt * (720.0f / MAX_FLIP_TIME) * 2.0f);
+      move(0.0f, -dt * (WND_SIZE.y / MAX_FLIP_TIME) * 2.0f);
       scale(1 + dt * 0.5f, 1 + dt * 0.5f);
     }
     else
     {
-      move(0.0f, dt * (720.0f / MAX_FLIP_TIME) * 2.0f);
+      move(0.0f, dt * (WND_SIZE.y / MAX_FLIP_TIME) * 2.0f);
       scale(1 - dt * 0.5f, 1 - dt * 0.5f);
     }
 
@@ -166,10 +168,24 @@ void Coin::Flip()
       RandPacket rndPacket{};
       rndPacket.min = 0;
       rndPacket.max = 1;
+
+      std::ifstream minMax;
+      minMax.open("Assets/minMaxValue.txt");
+      if (minMax)
+      {
+        minMax >> rndPacket.min;
+        minMax >> rndPacket.max;
+        minMax.close();
+      }
+
       if (mySocket.send(&rndPacket, sizeof(rndPacket)) != sf::Socket::Done)
       {
         std::cout << "Failed to send packet!\n";
         myHasConnection = false;
+      }
+      else
+      {
+        std::cout << "packet sent [min: " << rndPacket.min << " max: " << rndPacket.max << "]\n";
       }
     }
     myFlipTimer = 0.0f;

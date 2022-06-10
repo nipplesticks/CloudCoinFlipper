@@ -12,6 +12,7 @@ public:
   static void LoadTextures();
   static float SPRITE_SWAP_TIME;
   static float MAX_FLIP_TIME;
+  static sf::Vector2f WND_SIZE;
 
   Coin();
   ~Coin();

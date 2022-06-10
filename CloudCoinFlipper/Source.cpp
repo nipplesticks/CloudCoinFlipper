@@ -8,14 +8,19 @@ int main()
   sf::Font font;
   font.loadFromFile("Assets/BASKVILL.TTF");
   sf::RenderWindow wnd(sf::VideoMode(1280, 720), "CloudCoinFlipper");
+  auto wndSize = wnd.getSize();
+  Coin::WND_SIZE = (sf::Vector2f)wndSize;
   Coin::LoadTextures();
   sf::Texture background;
   background.loadFromFile("Assets/bck.png");
-  sf::RectangleShape bck(sf::Vector2f(1280, 720));
-  bck.setTexture(&background);
+  sf::RectangleShape bck;
+
+
 
   Coin coin;
-  coin.setPosition(1280 / 2, 720 / 1.5);
+  bck.setSize(Coin::WND_SIZE);
+  bck.setTexture(&background);
+  coin.setPosition(Coin::WND_SIZE.x / 2, Coin::WND_SIZE.y / 1.5);
   coin.setOrigin(coin.getSize() * 0.5f);
 
   bool spaceWasPressed = false;
@@ -54,7 +59,7 @@ int main()
   pressSpace.setFont(font);
   pressSpace.setString("Press 'space' to flip");
   pressSpace.setOrigin(sf::Vector2f(pressSpace.getGlobalBounds().width, pressSpace.getGlobalBounds().height) * 0.5f);
-  pressSpace.setPosition(1280 / 2, 720 / 2);
+  pressSpace.setPosition(Coin::WND_SIZE * 0.5f);
   pressSpace.setOutlineThickness(1);
 
   sf::Clock deltaTime;
@@ -68,13 +73,24 @@ int main()
       case sf::Event::Closed:
         wnd.close();
         break;
+      case sf::Event::Resized:
+      {
+        Coin::WND_SIZE.x = e.size.width;
+        Coin::WND_SIZE.y = e.size.height;
+        sf::FloatRect va(0.0f, 0.0f, (float)e.size.width, (float)e.size.height);
+        wnd.setView(sf::View(va));
+        bck.setSize(Coin::WND_SIZE);
+        coin.setPosition(Coin::WND_SIZE.x / 2, Coin::WND_SIZE.y / 1.5);
+        pressSpace.setPosition(Coin::WND_SIZE * 0.5f);
+        break;
+      }
       default:
         break;
       }
     }
     float dt = deltaTime.restart().asSeconds();
 
-    bool spacePressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Space);
+    bool spacePressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && wnd.hasFocus();
 
     if (!coin.IsFlipping() && spacePressed && !spaceWasPressed)
     {
@@ -83,7 +99,7 @@ int main()
       moveInfo = false;
       moveTimer = 0;
       info.setString("");
-      coin.setPosition(1280 / 2, 720 / 1.5);
+      coin.setPosition(Coin::WND_SIZE.x / 2, Coin::WND_SIZE.y / 1.5);
       coin.setScale(1.0f, 1.0f);
       coin.Flip();
     }
