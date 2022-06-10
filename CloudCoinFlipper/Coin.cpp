@@ -50,6 +50,8 @@ Coin::Coin()
     unsigned short port;
     input >> port;
 
+    std::cout << "Trying to connect to: " << ip << ":" << port << "\n";
+
     if (mySocket.connect(ip, port) != sf::Socket::Done)
     {
       myHasConnection = false;
