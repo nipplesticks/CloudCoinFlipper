@@ -140,10 +140,10 @@ xcopy /Y /s "$(SolutionDir)..\CloudCoinFlipper\Assets" "$(SolutionDir)x64\Debug\
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y /s "$(SolutionDir)SFML-2.5.1\bin" "$(SolutionDir)x64\Release"
-md "$(SolutionDir)x64\Debug\Assets"
+md "$(SolutionDir)x64\Release\Assets"
 md "$(ProjectDir)\Assets"
 xcopy /Y /s "$(SolutionDir)..\CloudCoinFlipper\Assets" "$(ProjectDir)\Assets"
-xcopy /Y /s "$(SolutionDir)..\CloudCoinFlipper\Assets" "$(SolutionDir)x64\Debug\Assets"</Command>
+xcopy /Y /s "$(SolutionDir)..\CloudCoinFlipper\Assets" "$(SolutionDir)x64\Release\Assets"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
