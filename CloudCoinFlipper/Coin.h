@@ -25,6 +25,11 @@ public:
   bool IsFlipping();
   void Flip();
 
+  void Connect(const std::string& ip, unsigned short port);
+  void Disconnect();
+  bool IsConnected();
+
+
 private:
   static sf::Texture COIN_SHEET;
   static sf::Texture COIN_SHEET_BLUR;
@@ -40,5 +45,6 @@ private:
   float myFlipTime = 0.0f;
   float myFlipTimer = 0.0f;
   bool myHasConnection;
+  
   sf::TcpSocket mySocket;
 };

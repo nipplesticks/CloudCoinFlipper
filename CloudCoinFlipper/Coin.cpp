@@ -23,7 +23,7 @@ void Coin::LoadTextures()
   COIN_SHEET.generateMipmap();
 }
 
-Coin::Coin()
+Coin::Coin() : sf::RectangleShape()
 {
   setPosition(0, 0);
   setSize(sf::Vector2f(TEXTURE_SIZE, TEXTURE_SIZE));
@@ -39,28 +39,6 @@ Coin::Coin()
   setTextureRect(myTextureRect);
   setTexture(&COIN_SHEET);
   myHasConnection = false;
-
- std::ifstream input;
-  input.open("Assets/IpAndPort.txt");
-  if (input)
-  {
-    myHasConnection = true;
-    
-    std::string ip;
-    std::getline(input, ip);
-    unsigned short port;
-    input >> port;
-
-    std::cout << "Trying to connect to: " << ip << ":" << port << "\n";
-
-    if (mySocket.connect(ip, port) != sf::Socket::Done)
-    {
-      myHasConnection = false;
-      std::cout << "Failed to connect!\n";
-    }
-
-    input.close();
-  }
 }
 
 Coin::~Coin()
@@ -192,6 +170,28 @@ void Coin::Flip()
     myIsFlipping = true;
     myFlipTime =  1.0f + ((float)(rand() % 1000 + 1) / 1000.0f) * (MAX_FLIP_TIME - 1.0f);
   }
+}
+
+void Coin::Connect(const std::string& ip, unsigned short port)
+{
+  myHasConnection = true;
+
+  if (mySocket.connect(ip, port) != sf::Socket::Done)
+  {
+    myHasConnection = false;
+    std::cout << "Failed to connect!\n";
+  }
+}
+
+void Coin::Disconnect()
+{
+  mySocket.disconnect();
+  myHasConnection = false;
+}
+
+bool Coin::IsConnected()
+{
+  return myHasConnection;
 }
 
 void Coin::StepTextureRect()

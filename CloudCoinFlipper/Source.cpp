@@ -2,9 +2,41 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Network.hpp>
 #include "Coin.h"
+#include "TextInput.h"
+#include <fstream>
+#include <iostream>
+#include <functional>
+
+
+
+struct SimpleButton : public sf::RectangleShape
+{
+  SimpleButton() : sf::RectangleShape()
+  {
+    setFillColor(sf::Color(200,200,200));
+  }
+
+
+  void Update(const sf::Vector2f& mousePosition)
+  {
+    if (ContainsMouse(mousePosition))
+      setFillColor(sf::Color::White);
+    else
+      setFillColor(sf::Color(200, 200, 200));
+  }
+
+  bool ContainsMouse(const sf::Vector2f& mousePos)
+  {
+    return getGlobalBounds().contains(mousePos);
+  }
+};
 
 int main()
 {
+  sf::Texture disconnected;
+  disconnected.loadFromFile("Assets/Disconnected.png");
+  sf::Texture connected;
+  connected.loadFromFile("Assets/Connected.png");
   sf::Font font;
   font.loadFromFile("Assets/BASKVILL.TTF");
   sf::RenderWindow wnd(sf::VideoMode(1280, 720), "CloudCoinFlipper");
@@ -14,8 +46,6 @@ int main()
   sf::Texture background;
   background.loadFromFile("Assets/bck.png");
   sf::RectangleShape bck;
-
-
 
   Coin coin;
   bck.setSize(Coin::WND_SIZE);
@@ -32,7 +62,6 @@ int main()
   int nrOfTails = 0;
 
   bool coinJustDone = false;
-
 
   sf::Text info;
   info.setFont(font);
@@ -62,6 +91,39 @@ int main()
   pressSpace.setPosition(Coin::WND_SIZE * 0.5f);
   pressSpace.setOutlineThickness(1);
 
+
+  TextInput ipInput;
+  ipInput.SetStrMaxLength(15);
+  ipInput.SetTextBoxName("IP");
+  ipInput.setSize(sf::Vector2f(250, 50));
+  ipInput.setPosition(Coin::WND_SIZE.x - 250, 0);
+  
+  TextInput portInput;
+  portInput.SetStrMaxLength(5);
+  portInput.SetTextBoxName("PORT");
+  portInput.setSize(sf::Vector2f(100, 50));
+  portInput.setPosition(Coin::WND_SIZE.x - 100, 55);
+
+  SimpleButton connectButton;
+  connectButton.setPosition(portInput.getPosition() + sf::Vector2f(0, portInput.getSize().y + 5));
+  connectButton.setSize(sf::Vector2f(100, 50));
+  connectButton.setTexture(&disconnected);
+
+  std::ifstream input;
+  input.open("Assets/IpAndPort.txt");
+  if (input)
+  {
+    std::string ip;
+    std::getline(input, ip);
+    unsigned short port;
+    input >> port;
+    ipInput.SetString(ip);
+    portInput.SetString(std::to_string(port));
+    input.close();
+  }
+
+  bool mouseWasPressed = false;
+
   sf::Clock deltaTime;
   while (wnd.isOpen())
   {
@@ -82,15 +144,78 @@ int main()
         bck.setSize(Coin::WND_SIZE);
         coin.setPosition(Coin::WND_SIZE.x / 2, Coin::WND_SIZE.y / 1.5);
         pressSpace.setPosition(Coin::WND_SIZE * 0.5f);
+        ipInput.setPosition(Coin::WND_SIZE.x - 250, 0);
+        portInput.setPosition(Coin::WND_SIZE.x - 100, 55);
+        connectButton.setPosition(portInput.getPosition() + sf::Vector2f(0, portInput.getSize().y + 5));
         break;
+      }
+      case sf::Event::TextEntered:
+      {
+        sf::Uint32 c = e.text.unicode;
+        ipInput.TextEntered(c);
+        portInput.TextEntered(c);
+      }
+      case sf::Event::KeyPressed:
+      {
+        sf::Keyboard::Key key = e.key.code;
+        if (key == sf::Keyboard::Delete || key == sf::Keyboard::Home || key == sf::Keyboard::End ||
+          key == sf::Keyboard::Left || key == sf::Keyboard::Right)
+        {
+          ipInput.TextEntered(key, true);
+          portInput.TextEntered(key, true);
+        }
       }
       default:
         break;
       }
     }
+
+    sf::Vector2f mousePosition = (sf::Vector2f)sf::Mouse::getPosition(wnd);
+    bool mousePress = sf::Mouse::isButtonPressed(sf::Mouse::Left);
+
     float dt = deltaTime.restart().asSeconds();
 
-    bool spacePressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && wnd.hasFocus();
+    if (!mousePress && mouseWasPressed && wnd.hasFocus())
+    {
+      ipInput.OnMousePress(mousePosition);
+      portInput.OnMousePress(mousePosition);
+      if (connectButton.ContainsMouse(mousePosition))
+      {
+        if (!coin.IsConnected())
+        {
+          std::cout << "Connecting...\n";
+          std::string ip = ipInput.GetString();
+          unsigned int port = atoi(portInput.GetString().c_str());
+          std::ofstream output;
+          output.open("Assets/IpAndPort.txt");
+          if (output)
+          {
+            output << ip << "\n";
+            output << port << "\n";;
+            output.close();
+          }
+          coin.Connect(ipInput.GetString(), atoi(portInput.GetString().c_str()));
+        }
+        else
+        {
+          std::cout << "Disconnecting...\n";
+          coin.Disconnect();
+        }
+
+        if (coin.IsConnected())
+          connectButton.setTexture(&connected);
+        else
+          connectButton.setTexture(&disconnected);
+      }
+    }
+    mouseWasPressed = mousePress;
+
+    ipInput.Update(dt);
+    portInput.Update(dt);
+    connectButton.Update(mousePosition);
+
+
+    bool spacePressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && wnd.hasFocus() && !portInput.IsActive() && !ipInput.IsActive();
 
     if (!coin.IsFlipping() && spacePressed && !spaceWasPressed)
     {
@@ -144,6 +269,9 @@ int main()
     wnd.draw(bck);
     wnd.draw(points);
     wnd.draw(coin);
+    ipInput.Draw(&wnd);
+    portInput.Draw(&wnd);
+    wnd.draw(connectButton);
     if (!coinJustDone)
       wnd.draw(pressSpace);
     wnd.draw(info);
