@@ -23,7 +23,7 @@ public:
 
   bool IsHeads();
   bool IsFlipping();
-  void Flip();
+  void Flip(unsigned short _min = 0, unsigned short _max = 1);
 
   void Connect(const std::string& ip, unsigned short port);
   void Disconnect();
@@ -45,6 +45,7 @@ private:
   float myFlipTime = 0.0f;
   float myFlipTimer = 0.0f;
   bool myHasConnection;
+  unsigned int myFakePacket = 0;
   
   sf::TcpSocket mySocket;
 };

@@ -1,3 +1,4 @@
+#include "Console.h"
 #include "Coin.h"
 #include <fstream>
 #include <iostream>
@@ -26,7 +27,7 @@ void Coin::LoadTextures()
 Coin::Coin() : sf::RectangleShape()
 {
   setPosition(0, 0);
-  setSize(sf::Vector2f(TEXTURE_SIZE, TEXTURE_SIZE));
+  setSize(sf::Vector2f(TEXTURE_SIZE * 1.5f, TEXTURE_SIZE * 1.5f));
   myIsHeads = true;
   myIsFlipping = false;
   myTextureXStep = 4;
@@ -57,11 +58,11 @@ void Coin::SetFlip(bool isFlipping)
       size_t bytes = 0;
       if (mySocket.receive(&val, sizeof(val), bytes))
       {
-        std::cout << "failed to receive!\n";
+        TO_CONSOLE("failed to receive!");
         myHasConnection = false;
       }
       int value = val.value;
-      std::cout << "value received: " << value << std::endl;
+      TO_CONSOLE("value received: %d", value);
       if (value % 2)
       {
         myTextureYStep = 0;
@@ -75,17 +76,16 @@ void Coin::SetFlip(bool isFlipping)
     }
     if (!myHasConnection)
     {
-      if (myTextureYStep == 0 || myTextureYStep == 3)
+      TO_CONSOLE("value localy generated: %d", (int)myFakePacket);
+      if (myFakePacket % 2)
       {
-        myIsHeads = true;
         myTextureYStep = 0;
-        std::cout << "HEADS!\n";
+        myIsHeads = true;
       }
       else
       {
         myTextureYStep = 2;
         myIsHeads = false;
-        std::cout << "TAIL!\n";
       }
     }
 
@@ -137,35 +137,32 @@ bool Coin::IsFlipping()
   return myIsFlipping;
 }
 
-void Coin::Flip()
+void Coin::Flip(unsigned short _min, unsigned short _max)
 {
   if (!myIsFlipping)
   {
+    myFakePacket = rand() % (_max - _min + 1) + _min;
     if (myHasConnection)
     {
       RandPacket rndPacket{};
-      rndPacket.min = 0;
-      rndPacket.max = 1;
-
-      std::ifstream minMax;
-      minMax.open("Assets/minMaxValue.txt");
-      if (minMax)
-      {
-        minMax >> rndPacket.min;
-        minMax >> rndPacket.max;
-        minMax.close();
-      }
+      rndPacket.min = _min;
+      rndPacket.max = _max;
 
       if (mySocket.send(&rndPacket, sizeof(rndPacket)) != sf::Socket::Done)
       {
-        std::cout << "Failed to send packet!\n";
+        TO_CONSOLE("Failed to send packet!");
         myHasConnection = false;
       }
       else
       {
-        std::cout << "packet sent [min: " << rndPacket.min << " max: " << rndPacket.max << "]\n";
+        TO_CONSOLE("packet sent [min: %d max: %d]", _min, _max);
       }
     }
+    else
+    {
+      TO_CONSOLE("No connection, using local [min: %d max: %d]", _min, _max);
+    }
+
     myFlipTimer = 0.0f;
     myIsFlipping = true;
     myFlipTime =  1.0f + ((float)(rand() % 1000 + 1) / 1000.0f) * (MAX_FLIP_TIME - 1.0f);
@@ -179,7 +176,7 @@ void Coin::Connect(const std::string& ip, unsigned short port)
   if (mySocket.connect(ip, port) != sf::Socket::Done)
   {
     myHasConnection = false;
-    std::cout << "Failed to connect!\n";
+    TO_CONSOLE("Failed to connect!");
   }
 }
 

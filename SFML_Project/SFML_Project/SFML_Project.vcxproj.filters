@@ -24,12 +24,18 @@
     <ClCompile Include="..\..\CloudCoinFlipper\TextInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\CloudCoinFlipper\Console.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\CloudCoinFlipper\Coin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\CloudCoinFlipper\TextInput.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\CloudCoinFlipper\Console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

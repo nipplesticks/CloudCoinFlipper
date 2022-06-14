@@ -1,3 +1,4 @@
+#include "Console.h"
 #include "TextInput.h"
 
 const float TextInput::BLINK_TIME = 0.5f;
@@ -56,8 +57,6 @@ void TextInput::Update(float dt)
   }
 }
 
-//#include <iostream>
-
 void TextInput::TextEntered(sf::Uint32 c, bool specialKeyCommand)
 {
   if (myIsActive)
@@ -65,7 +64,7 @@ void TextInput::TextEntered(sf::Uint32 c, bool specialKeyCommand)
     std::string str = myText.getString();
     if (!specialKeyCommand)
     {
-      //std::cout << c << std::endl;
+      //TO_CONSOLE(c);
       if (c >= 30 && c <= 256 && str.length() < myMaxStringLength)
       {
         str.insert(str.begin() + myCursorIndex++, c);

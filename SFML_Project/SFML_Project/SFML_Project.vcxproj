@@ -20,11 +20,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\CloudCoinFlipper\Coin.cpp" />
+    <ClCompile Include="..\..\CloudCoinFlipper\Console.cpp" />
     <ClCompile Include="..\..\CloudCoinFlipper\Source.cpp" />
     <ClCompile Include="..\..\CloudCoinFlipper\TextInput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\CloudCoinFlipper\Coin.h" />
+    <ClInclude Include="..\..\CloudCoinFlipper\Console.h" />
     <ClInclude Include="..\..\CloudCoinFlipper\TextInput.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

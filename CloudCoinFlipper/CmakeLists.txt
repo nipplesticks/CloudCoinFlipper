@@ -9,7 +9,7 @@ add_subdirectory("SFML-2.5.1")
 
 project(CloudCoinFlipper)
 
-add_executable(CloudCoinFlipper Source.cpp Coin.cpp TextInput.cpp)
+add_executable(CloudCoinFlipper Source.cpp Coin.cpp TextInput.cpp Console.cpp)
 
 target_link_libraries(CloudCoinFlipper sfml-network sfml-system sfml-audio sfml-graphics sfml-window)
 

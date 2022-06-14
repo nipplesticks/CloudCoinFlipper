@@ -1,4 +1,21 @@
 #include <SFML/Graphics.hpp>
+#include <Windows.h>
+
+void HideConsole()
+{
+  ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+}
+
+void ShowConsole()
+{
+  ::ShowWindow(::GetConsoleWindow(), SW_SHOW);
+}
+
+bool IsConsoleVisible()
+{
+  return ::IsWindowVisible(::GetConsoleWindow()) != FALSE;
+}
+
 #include <SFML/Audio.hpp>
 #include <SFML/Network.hpp>
 #include "Coin.h"
@@ -6,8 +23,7 @@
 #include <fstream>
 #include <iostream>
 #include <functional>
-
-
+#include "Console.h"
 
 struct SimpleButton : public sf::RectangleShape
 {
@@ -31,8 +47,74 @@ struct SimpleButton : public sf::RectangleShape
   }
 };
 
+struct IconAnimator
+{
+  IconAnimator()
+  {
+    sf::Image img;
+    img.loadFromFile("Assets/Coin_Spritesheet.png");
+    sf::IntRect ir;
+    ir.top = 0;
+    ir.left = 0;
+    ir.width = TEXTURE_SIZE;
+    ir.height = TEXTURE_SIZE;
+    for (int y = 0; y < TEXTURE_SHEET_HEIGHT; y++)
+    {
+      ir.top = y * TEXTURE_SIZE;
+      for (int x = 0; x < TEXTURE_SHEET_WIDTH; x++)
+      {
+        ir.left = x * TEXTURE_SIZE;
+        int idx = x + y * TEXTURE_SHEET_WIDTH;
+        myImages[idx].create(TEXTURE_SIZE, TEXTURE_SIZE);
+        myImages[idx].copy(img, 0, 0, ir);
+      }
+    }
+  }
+  void Update(float dt)
+  {
+    myIconSwapTimer += dt;
+
+    while (myIconSwapTimer >= mySpeed)
+    {
+      myUpdateReady = true;
+      myIconSwapTimer -= mySpeed;
+      if (++myIconXIdx == TEXTURE_SHEET_WIDTH)
+      {
+        myIconXIdx = 0;
+        myIconYIdx++;
+      }
+      if (myIconYIdx == TEXTURE_SHEET_HEIGHT)
+      {
+        myIconYIdx = 0;
+      }
+    }
+  }
+
+  void GetIcon(sf::RenderWindow* wnd_p)
+  {
+    if (myUpdateReady)
+    {
+      wnd_p->setIcon(TEXTURE_SIZE, TEXTURE_SIZE, myImages[myIconXIdx + myIconYIdx * TEXTURE_SHEET_WIDTH].getPixelsPtr());
+      myUpdateReady = false;
+    }
+  }
+
+  sf::Image myImages[TEXTURE_SHEET_WIDTH * TEXTURE_SHEET_HEIGHT];
+  float myIconSwapTimer = 0.f;
+  float mySpeed = 0.15f;
+  int myIconXIdx = 0;
+  int myIconYIdx = 0;
+  bool myUpdateReady = true;
+  
+};
+
+
 int main()
 {
+  HideConsole();
+  Console::Init();
+  Console::GetInstance()->setSize(sf::Vector2f(512, 300));
+  Console::GetInstance()->SetCharSize(20);
   sf::Texture disconnected;
   disconnected.loadFromFile("Assets/Disconnected.png");
   sf::Texture connected;
@@ -40,6 +122,9 @@ int main()
   sf::Font font;
   font.loadFromFile("Assets/BASKVILL.TTF");
   sf::RenderWindow wnd(sf::VideoMode(1280, 720), "CloudCoinFlipper");
+  IconAnimator ia;
+  ia.GetIcon(&wnd);
+
   auto wndSize = wnd.getSize();
   Coin::WND_SIZE = (sf::Vector2f)wndSize;
   Coin::LoadTextures();
@@ -47,9 +132,10 @@ int main()
   background.loadFromFile("Assets/bck.png");
   sf::RectangleShape bck;
 
-  Coin coin;
   bck.setSize(Coin::WND_SIZE);
   bck.setTexture(&background);
+  Coin coin;
+  
   coin.setPosition(Coin::WND_SIZE.x / 2, Coin::WND_SIZE.y / 1.5);
   coin.setOrigin(coin.getSize() * 0.5f);
 
@@ -91,23 +177,36 @@ int main()
   pressSpace.setPosition(Coin::WND_SIZE * 0.5f);
   pressSpace.setOutlineThickness(1);
 
-
   TextInput ipInput;
   ipInput.SetStrMaxLength(15);
   ipInput.SetTextBoxName("IP");
   ipInput.setSize(sf::Vector2f(250, 50));
-  ipInput.setPosition(Coin::WND_SIZE.x - 250, 0);
+  ipInput.setPosition(Coin::WND_SIZE.x - ipInput.getSize().x, 0);
   
   TextInput portInput;
   portInput.SetStrMaxLength(5);
   portInput.SetTextBoxName("PORT");
   portInput.setSize(sf::Vector2f(100, 50));
-  portInput.setPosition(Coin::WND_SIZE.x - 100, 55);
+  portInput.setPosition(Coin::WND_SIZE.x - portInput.getSize().x, ipInput.getPosition().y + ipInput.getSize().y + 5);
 
   SimpleButton connectButton;
-  connectButton.setPosition(portInput.getPosition() + sf::Vector2f(0, portInput.getSize().y + 5));
   connectButton.setSize(sf::Vector2f(100, 50));
   connectButton.setTexture(&disconnected);
+  connectButton.setPosition(Coin::WND_SIZE.x - connectButton.getSize().x, portInput.getPosition().y + portInput.getSize().y + 5);
+
+  TextInput minInput;
+  minInput.SetStrMaxLength(5);
+  minInput.SetTextBoxName("minValue");
+  minInput.setSize(sf::Vector2f(100, 50));
+  minInput.setPosition(Coin::WND_SIZE.x - minInput.getSize().x, connectButton.getPosition().y + connectButton.getSize().y + 5);
+
+  TextInput maxInput;
+  maxInput.SetStrMaxLength(5);
+  maxInput.SetTextBoxName("maxValue");
+  maxInput.setSize(sf::Vector2f(100, 50));
+  maxInput.setPosition(Coin::WND_SIZE.x - maxInput.getSize().x, minInput.getPosition().y + minInput.getSize().y + 5);
+
+  Console::GetInstance()->setPosition(0, Coin::WND_SIZE.y - Console::GetInstance()->getSize().y);
 
   std::ifstream input;
   input.open("Assets/IpAndPort.txt");
@@ -115,18 +214,37 @@ int main()
   {
     std::string ip;
     std::getline(input, ip);
-    unsigned short port;
+    unsigned short port = UINT16_MAX;
     input >> port;
     ipInput.SetString(ip);
     portInput.SetString(std::to_string(port));
     input.close();
   }
 
+  std::ifstream minMax;
+  minMax.open("Assets/minMaxValue.txt");
+  if (minMax)
+  {
+    unsigned short minVal = 0;
+    unsigned short maxVal = 1;
+
+    minMax >> minVal;
+    minMax >> maxVal;
+
+    minInput.SetString(std::to_string(minVal));
+    maxInput.SetString(std::to_string(maxVal));
+
+    minMax.close();
+  }
+
   bool mouseWasPressed = false;
+
+  bool connectButtonPressed = false;
 
   sf::Clock deltaTime;
   while (wnd.isOpen())
   {
+    connectButtonPressed = false;
     sf::Event e;
     while (wnd.pollEvent(e))
     {
@@ -144,9 +262,12 @@ int main()
         bck.setSize(Coin::WND_SIZE);
         coin.setPosition(Coin::WND_SIZE.x / 2, Coin::WND_SIZE.y / 1.5);
         pressSpace.setPosition(Coin::WND_SIZE * 0.5f);
-        ipInput.setPosition(Coin::WND_SIZE.x - 250, 0);
-        portInput.setPosition(Coin::WND_SIZE.x - 100, 55);
-        connectButton.setPosition(portInput.getPosition() + sf::Vector2f(0, portInput.getSize().y + 5));
+        ipInput.setPosition(Coin::WND_SIZE.x - ipInput.getSize().x, 0);
+        portInput.setPosition(Coin::WND_SIZE.x - portInput.getSize().x, ipInput.getPosition().y + ipInput.getSize().y + 5);
+        connectButton.setPosition(Coin::WND_SIZE.x - connectButton.getSize().x, portInput.getPosition().y + portInput.getSize().y + 5);
+        minInput.setPosition(Coin::WND_SIZE.x - minInput.getSize().x, connectButton.getPosition().y + connectButton.getSize().y + 5);
+        maxInput.setPosition(Coin::WND_SIZE.x - maxInput.getSize().x, minInput.getPosition().y + minInput.getSize().y + 5);
+        Console::GetInstance()->setPosition(0, Coin::WND_SIZE.y - Console::GetInstance()->getSize().y);
         break;
       }
       case sf::Event::TextEntered:
@@ -154,6 +275,8 @@ int main()
         sf::Uint32 c = e.text.unicode;
         ipInput.TextEntered(c);
         portInput.TextEntered(c);
+        minInput.TextEntered(c);
+        maxInput.TextEntered(c);
       }
       case sf::Event::KeyPressed:
       {
@@ -163,6 +286,8 @@ int main()
         {
           ipInput.TextEntered(key, true);
           portInput.TextEntered(key, true);
+          minInput.TextEntered(key, true);
+          maxInput.TextEntered(key, true);
         }
       }
       default:
@@ -174,18 +299,22 @@ int main()
     bool mousePress = sf::Mouse::isButtonPressed(sf::Mouse::Left);
 
     float dt = deltaTime.restart().asSeconds();
+    ia.Update(dt);
+    ia.GetIcon(&wnd);
 
     if (!mousePress && mouseWasPressed && wnd.hasFocus())
     {
       ipInput.OnMousePress(mousePosition);
       portInput.OnMousePress(mousePosition);
+      minInput.OnMousePress(mousePosition);
+      maxInput.OnMousePress(mousePosition);
       if (connectButton.ContainsMouse(mousePosition))
       {
         if (!coin.IsConnected())
         {
-          std::cout << "Connecting...\n";
           std::string ip = ipInput.GetString();
           unsigned int port = atoi(portInput.GetString().c_str());
+          TO_CONSOLE("Connecting to %s:%u", ip.c_str(), port);
           std::ofstream output;
           output.open("Assets/IpAndPort.txt");
           if (output)
@@ -194,18 +323,13 @@ int main()
             output << port << "\n";;
             output.close();
           }
-          coin.Connect(ipInput.GetString(), atoi(portInput.GetString().c_str()));
+          connectButtonPressed = true;
         }
         else
         {
-          std::cout << "Disconnecting...\n";
+          TO_CONSOLE("Disconnecting...");
           coin.Disconnect();
         }
-
-        if (coin.IsConnected())
-          connectButton.setTexture(&connected);
-        else
-          connectButton.setTexture(&disconnected);
       }
     }
     mouseWasPressed = mousePress;
@@ -213,12 +337,31 @@ int main()
     ipInput.Update(dt);
     portInput.Update(dt);
     connectButton.Update(mousePosition);
+    minInput.Update(dt);
+    maxInput.Update(dt);
 
 
     bool spacePressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && wnd.hasFocus() && !portInput.IsActive() && !ipInput.IsActive();
 
     if (!coin.IsFlipping() && spacePressed && !spaceWasPressed)
     {
+      std::ofstream minMaxOut;
+      minMaxOut.open("Assets/minMaxValue.txt");
+      unsigned int _min = 0;
+      unsigned int _max = 1;
+      if (minMaxOut)
+      {
+        std::string minVal = minInput.GetString();
+        std::string maxVal = maxInput.GetString();
+
+        _min = (unsigned int)atoi(minVal.c_str());
+        _max = (unsigned int)atoi(maxVal.c_str());
+
+        minMaxOut << minVal << "\n";
+        minMaxOut << maxVal << "\n";
+        minMaxOut.close();
+      }
+      
       flipSound.play();
       coinJustDone = true;
       moveInfo = false;
@@ -226,7 +369,8 @@ int main()
       info.setString("");
       coin.setPosition(Coin::WND_SIZE.x / 2, Coin::WND_SIZE.y / 1.5);
       coin.setScale(1.0f, 1.0f);
-      coin.Flip();
+
+      coin.Flip(_min, _max);
     }
 
     spaceWasPressed = spacePressed;
@@ -272,10 +416,23 @@ int main()
     ipInput.Draw(&wnd);
     portInput.Draw(&wnd);
     wnd.draw(connectButton);
+    minInput.Draw(&wnd);
+    maxInput.Draw(&wnd);
+    Console::GetInstance()->Draw(&wnd);
     if (!coinJustDone)
       wnd.draw(pressSpace);
     wnd.draw(info);
     wnd.display();
+
+    if (connectButtonPressed)
+    {
+      coin.Connect(ipInput.GetString(), atoi(portInput.GetString().c_str()));
+      if (coin.IsConnected())
+        connectButton.setTexture(&connected);
+      else
+        connectButton.setTexture(&disconnected);
+    }
+
   }
 
   return 0;
