@@ -141,7 +141,6 @@ void Coin::Flip(unsigned short _min, unsigned short _max)
 {
   if (!myIsFlipping)
   {
-    myFakePacket = rand() % (_max - _min + 1) + _min;
     if (myHasConnection)
     {
       RandPacket rndPacket{};
@@ -162,6 +161,9 @@ void Coin::Flip(unsigned short _min, unsigned short _max)
     {
       TO_CONSOLE("No connection, using local [min: %d max: %d]", _min, _max);
     }
+    if (_min > _max)
+      std::swap(_min, _max);
+    myFakePacket = rand() % (_max - _min + 1) + _min;
 
     myFlipTimer = 0.0f;
     myIsFlipping = true;
