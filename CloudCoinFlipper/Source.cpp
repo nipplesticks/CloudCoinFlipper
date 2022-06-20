@@ -428,10 +428,12 @@ int main()
     {
       coin.Connect(ipInput.GetString(), atoi(portInput.GetString().c_str()));
       if (coin.IsConnected())
-        connectButton.setTexture(&connected);
-      else
-        connectButton.setTexture(&disconnected);
+        TO_CONSOLE("Connected!");
     }
+    if (coin.IsConnected())
+      connectButton.setTexture(&connected);
+    else
+      connectButton.setTexture(&disconnected);
 
   }
 

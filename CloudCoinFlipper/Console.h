@@ -19,6 +19,7 @@ public:
   void Draw(sf::RenderTarget* rt_p);
   void SetLineMemory(unsigned int lineMemLength);
   void SetCharSize(unsigned int charSize);
+  std::string CreateTimestamp();
   
 private:
   static Console CONSOLE;

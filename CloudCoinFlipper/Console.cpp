@@ -3,6 +3,9 @@
 #include <iostream>
 #include <strsafe.h>
 #include <windows.h>
+#include <sstream>
+#include <iomanip>
+#include <string>
 
 Console Console::CONSOLE;
 
@@ -41,7 +44,7 @@ void Console::Print(const char* file, const char* line, const char* format, ...)
   printer(finalMessage, "%s (%d): %s", file, line, logMessage);
 
   std::string msg(finalMessage);
-  myTexts.push_back(msg);
+  myTexts.push_back(CreateTimestamp() + " " + msg);
   while (myTexts.size() > myLineMem)
     myTexts.pop_front();
 }
@@ -56,7 +59,7 @@ void Console::Print(const char* format, ...)
   va_end(argList);
 
   std::string line(logMessage);
-  myTexts.push_back(line);
+  myTexts.push_back(CreateTimestamp() + " " + line);
   while (myTexts.size() > myLineMem)
     myTexts.pop_front();
 }
@@ -113,4 +116,18 @@ void Console::SetLineMemory(unsigned int lineMemLength)
 void Console::SetCharSize(unsigned int charSize)
 {
   myCharSize = charSize;
+}
+
+std::string Console::CreateTimestamp()
+{
+  auto currentTime = std::time(nullptr);
+  tm timeInfo{};
+  const auto localTimeError = localtime_s(&timeInfo, &currentTime);
+  if (localTimeError != 0)
+    throw std::runtime_error("localtime_s() failed: " + std::to_string(localTimeError));
+
+  std::ostringstream outputStream;
+  outputStream << std::put_time(&timeInfo, "[%Y-%m-%d %H:%M:%S]");
+  std::string timestamp(outputStream.str());
+  return timestamp;
 }
